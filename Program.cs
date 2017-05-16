@@ -10,30 +10,33 @@ namespace MO
     {
         static void Main(string[] args)
         {
-            //local minimum at x = 0.7071707
-            //local maximum at x = -0.7071707
-            Console.WriteLine("Enter a, b, eps:");
-            double a = double.Parse(Console.ReadLine());
-            double b = double.Parse(Console.ReadLine());
+            //Func<double[], double> function = u => Math.Pow(u[0] - u[1], 2) + u[0] - 5 * u[1];
+            //Func<double[], double> dfdu1 = u => 2 * u[0] - 2 * u[1] + 1;
+            //Func<double[], double> dfdu2 = u => -2 * u[0] + 2 * u[1] - 5;
+            //double dfu1u1 = 2;
+            //double dfu1u2 = -2;
+            //double dfu2u1 = -2;
+            //double dfu2u2 = 2;
+            Func<double[], double> function = u => 3 * Math.Pow(u[0], 2) + 4 * u[0] * u[1] + 3 * Math.Pow(u[1], 2);
+            Func<double[], double> dfdu1 = u => 6 * u[0] + 4 * u[1];
+            Func<double[], double> dfdu2 = u => 6 * u[1] + 4 * u[0];
+            double dfu1u1 = 6;
+            double dfu1u2 = 4;
+            double dfu2u1 = 4;
+            double dfu2u2 = 6;
+            OptimizationMethods opt = new OptimizationMethods(function, dfdu1, dfdu2, dfu1u1, dfu1u2, dfu2u1, dfu2u2);
+
+            Console.WriteLine("Enter u1, u2, eps:");
+            double u1 = double.Parse(Console.ReadLine());
+            double u2 = double.Parse(Console.ReadLine());
             double eps = double.Parse(Console.ReadLine());
 
-            Func<double, double> f = x => 1 * Math.Pow(x, 5) + 0 * Math.Pow(x, 4) + 0.5 * Math.Pow(x, 3) + 0 * Math.Pow(x, 2) + -2 * x + 2;
-            //Func<double, double> f = x => Math.Pow(x - 1, 2);
-            Func<double, double> df = x => 5 * Math.Pow(x, 4) + 1.5 * Math.Pow(x, 2) - 2;
-            //Func<double, double> df = x => 2 * (x - 1);
-            Func<double, double> d2f = x => 20 * Math.Pow(x, 3) + 3 * x;
-            //Func<double, double> d2f = x => 2;
-            try
-            {
-                Console.WriteLine("Bisection: " + OptimizationMethods.Bisection(f, df, d2f, a, b, eps));
-                Console.WriteLine("Golden ratio: " + OptimizationMethods.GoldenRatio(f, df, d2f, a, b, eps));
-                Console.WriteLine("Parabola : " + OptimizationMethods.Parabola(f, df, d2f, a, b, eps));
-                Console.WriteLine("Newton: " + OptimizationMethods.Newton(f, df, d2f, a, b, eps));
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            Console.WriteLine("Division step: " + opt.DivisionStep(u1, u2, eps) + "\n");
+            Console.WriteLine("Steepest descent: " + opt.SteepestDescent(u1, u2, eps) + "\n");
+            Console.WriteLine("Newton: " + opt.Newton(u1, u2, eps) + "\n");
+            Console.WriteLine("Penalties: " + opt.Penalties(u1, u2, eps) + "\n");
+
+            
             Console.ReadKey();
         }
     }

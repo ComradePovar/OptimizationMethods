@@ -6,261 +6,227 @@ using System.Threading.Tasks;
 
 namespace MO
 {
-    public static class OptimizationMethods
+    public class OptimizationMethods
     {
-        public static double Bisection(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps)
-        {
-            int i, k;
-            double value = bisection(function, df, d2f, a, b, eps, out i);
-            Console.WriteLine($"Bisection iterations: {i}");
+        private double dfu2u2;
+        private double dfu1u1;
+        private double dfu1u2;
+        private Func<double[], double> dfdu2;
+        private Func<double[], double> dfdu1;
+        private Func<double[], double> function;
+        private double dfu2u1;
 
-            return value;
+        private const int MAX_ITERATIONS = 10000;
+
+        public OptimizationMethods(Func<double[], double> f, Func<double[], double> dfdu1, Func<double[], double> dfdu2, double dfu1u1, double dfu1u2, double dfu2u1, double dfu2u2)
+        {
+            this.function = f;
+            this.dfdu1 = dfdu1;
+            this.dfdu2 = dfdu2;
+            this.dfu1u2 = dfu1u2;
+            this.dfu1u1 = dfu1u1;
+            this.dfu2u1 = dfu2u1;
+            this.dfu2u2 = dfu2u2;
         }
 
-        public static double GoldenRatio(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps)
+        public double DivisionStep(double u1, double u2, double eps)
         {
-            int i;
-            double value = goldenRatio(function, df, d2f, a, b, eps, out i);
-            Console.WriteLine("Golden ratio iterations: " + i);
+            double[] values = divisionStep(u1, u2, eps, out int i);
+            Console.WriteLine($"Division step iterations: " + i);
 
-            return value;
+            Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
+            return function(values);
+        }
+        
+        public double SteepestDescent(double u1, double u2, double eps)
+        {
+            double[] values = steepestDescent(u1, u2, eps, out int i);
+            Console.WriteLine($"Steepest descent iterations: " + i);
+
+            Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
+            return function(values);
         }
 
-        public static double Newton(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps)
+        public double Penalties(double u1, double u2, double eps)
         {
-            int i;
-            double value = newton(function, df, d2f, a, b, eps, out i);
-            Console.WriteLine("Newton iterations: " + i);
+            double[] values = penalties(u1, u2, eps, out int i);
+            Console.WriteLine($"Penalties iterations: " + i);
 
-            return value;
+            Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
+            return function(values);
         }
 
-        public static double Parabola(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps)
+        private double[] penalties(double u1, double u2, double eps, out int i)
         {
-            int i;
-            double value = parabola(function, df, d2f, a, b, eps, out i);
-            Console.WriteLine("Parabola iterations: " + i);
-
-            return value;
-        }
-
-        private static bool isUnimodal(Func<double, double> df, Func<double, double> d2f, double a, double b, double step)
-        {
-
-            if (df(a) >= 0 && df(b) <= 0 || df(a) <= 0 && df(b) >= 0)
-                while (a <= b)
-                {
-                    if (d2f(a) < 0)
-                        return false;
-
-                    a += step;
-                }
-            else
-                return false;
-            return true;
-        }
-
-        private static double goldenRatio(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps, out int i, int maxIterations = 10000)
-        {
-            if (!isUnimodal(df, d2f, a, b, eps))
-                throw new ArgumentException("Function is not unimodal");
-
-            double alpha = (Math.Sqrt(5) - 1) / 2;
-            double alpha1 = (3 - Math.Sqrt(5)) / 2;
-            double u1 = a + alpha1 * (b - a);
-            double u2 = a + alpha * (b - a);
-            
-            for (i = 0; (b - a) >= eps && i < maxIterations; i++)
-            {
-                double j1 = function(u1), j2 = function(u2);
-                if (j1 < j2)
-                {
-                    b = u2;
-                    u2 = u1;
-                    j2 = j1;
-                    u1 = a + alpha1 * (b - a);
-                    j1 = function(u1);
-                }
-                else if (j1 > j2)
-                {
-                    a = u1;
-                    u1 = u2;
-                    j1 = j2;
-                    u2 = a + alpha * (b - a);
-                    j2 = function(u2);
-                }
-                else
-                {
-                    b = u2;
-                    a = u1;
-                    u1 = a + alpha1 * (b - a);
-                    u2 = a + alpha * (b - a);
-                    j1 = function(u1);
-                    j2 = function(u2);
-                }
-            }
-
-            return (b + a) / 2;
-        }
-
-        private static double bisection(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps, out int i, int maxIterations = 10000)
-        {
-            if (!isUnimodal(df, d2f, a, b, eps))
-                throw new ArgumentException("Function is not unimodal");
-
-            double delta = 0.001;
-            double A = a, B = b;
-            for (i = 0; i < maxIterations && (B - A) >= eps; i++)
-            {
-                double u1 = (B + A - delta) / 2;
-                double u2 = (B + A + delta) / 2;
-                double j1 = function(u1);
-                double j2 = function(u2);
-                if (j1 < j2)
-                {
-                    B = u2;
-                }
-                else if (j1 > j2)
-                {
-                    A = u1;
-                }
-                else
-                {
-                    A = u1;
-                    B = u2;
-                }
-            }
-                
-            return (B + A) / 2;
-        }
-
-        private static double newton(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps, out int i, int maxIterations = 10000)
-        {
-            int j;
-
-            int iterationsCount = 2;
-            while (true)
-            {
-                double u = goldenRatio(function, df, d2f, a, b, eps, out j, iterationsCount);
-
-                for (i = 0; i < maxIterations; i++)
-                {
-                    double deriative = df(u);
-                    if (Math.Abs(deriative) <= eps)
-                    {
-                        return u;
-                    }
-
-                    u = u - deriative / d2f(u);
-                }
-
-                iterationsCount++;
-            }
-        }
-
-        private static double getW(double delta1, double delta2, double u1, double u2, double u3)
-        {
-            return u2 + (Math.Pow(u3 - u2, 2) * delta1 - Math.Pow(u2 - u1, 2) * delta2) / (2 * ((u3 - u2) * delta1 + (u2 - u1) * delta2));
-        }
-        private static double parabola(Func<double, double> function, Func<double, double> df, Func<double, double> d2f, double a, double b, double eps, out int i, int maxIterations = 10000)
-        {
-            if (!isUnimodal(df, d2f, a, b, eps))
-                throw new ArgumentException("Function is not unimodal");
-
-            double u1 = a;
-            double u2 = (a + b) / 2;
-            double u3 = b;
-
             i = 1;
+            double c = 10.0;
+            double k = 0;
+            double r = 1.0;
+            double[] u0 = new double[] { u1, u2 };
+            Func<double[], double> dpu1 = u => dfdu1(u) - r / Math.Pow(u[0], 2);
+            Func<double[], double> dpu2 = u => dfdu2(u) - r / Math.Pow(u[1], 2);
+            Func<double[], double> dpu1u1 = u => dfu1u1 + r * 2.0 / Math.Pow(u[0], 3);
+            Func<double[], double> dpu2u2 = u => dfu2u2 + r * 2.0 / Math.Pow(u[1], 3);
+            Func<double[], double> lamda = u => 1.0 / (dpu1u1(u) * dpu2u2(u) - dfu1u2 * dfu2u1);
 
-            while (i < maxIterations)
+
+            while (i < MAX_ITERATIONS)
             {
-                double delta1 = function(u1) - function(u2);
-                double delta2 = function(u3) - function(u2);
-                double w = getW(delta1, delta2, u1, u2, u3);
-                double fw = function(w);
-                double fu2 = function(u2);
-
-                if (w < u2)
+                double gradLength = Math.Sqrt(Math.Pow(dpu1(u0), 2) + Math.Pow(dpu2(u0), 2));
+                if (gradLength < eps)
                 {
-                    if (fw < fu2)
+                    if (r < eps)
                     {
-                        u3 = u2;
-                        u2 = w;
-                    }
-                    else if (fw > fu2)
-                    {
-                        u1 = w;
-                    }
-                    else
-                    {
-                        if (function(u1) > fu2)
-                        {
-                            u3 = u2;
-                            u2 = w;
-                        }
-                        else if (fu2 > function(u3))
-                        {
-                            u1 = w;
-                        }
-                    }
-                }
-                else if (w > u2)
-                {
-                    if (fw < fu2)
-                    {
-                        u1 = u2;
-                        u2 = w;
-                    }
-                    else if (fw > fu2)
-                    {
-                        u3 = w;
-                    }
-                    else
-                    {
-                        if (function(u3) > fu2)
-                        {
-                            u1 = u2;
-                            u2 = w;
-                        }
-                        else if (function(u1) > fu2)
-                        {
-                            u3 = w;
-                        }
+                        return u0;
                     }
                 }
                 else
                 {
-                    double delta = 0.001;
-                    while (delta >= eps)
-                    {
-                        double x1 = u2 - delta;
-                        double x2 = u2 + delta;
-                        if (function(x1) < fu2)
-                        {
-                            u2 = x1;
-                            break;
-                        }
-                        else if (function(x2) < fu2)
-                        {
-                            u2 = x2;
-                            break;
-                        }
-                        delta /= 10;
-                    }
-
-                    if (delta < eps)
-                        return u2;
+                    r /= 10.0;
+                    double p1 = dpu1(u0);
+                    double p2 = dpu2(u0);
+                    double lamd = lamda(u0);
+                    u0[0] = u0[0] - lamd * p1;
+                    u0[1] = u0[1] - lamd * p2;
                 }
 
-
-
-                if (Math.Abs(w - getW(delta1, delta2, u1, u2, u3)) < eps)
-                    return u2;
                 i++;
             }
 
-            return u2;
+            return u0;
+        }
+
+        public double Newton(double u1, double u2, double eps)
+        {
+            double[] values = newton(u1, u2, eps, out int i);
+            Console.WriteLine($"Newton iterations: " + i);
+
+            Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
+            return function(values);
+        }
+
+        private double[] newton(double u1, double u2, double eps, out int i)
+        {
+            i = 0;
+            double[] u0 = new double[] { u1, u2 };
+            while (i < MAX_ITERATIONS)
+            {
+                double gradLength = getGradientLength(u0);
+                if (gradLength < eps)
+                {
+                    return u0;
+                }
+
+                double[] grads = getGradients(u0);
+                double reverseDetH = 1.0 / (dfu1u1 * dfu2u2 - dfu1u2 * dfu2u1);
+                double[,] hessianMatrix = new double[,]
+                {
+                    { reverseDetH*dfu2u2, reverseDetH*(-dfu1u2) },
+                    { reverseDetH*(-dfu2u1), reverseDetH*dfu1u1 }
+                };
+
+                u0[0] = u0[0] - (grads[0] * hessianMatrix[0, 0] + grads[1] * hessianMatrix[1, 0]);
+                u0[1] = u0[1] - (grads[0] * hessianMatrix[0, 1] + grads[1] * hessianMatrix[1, 1]);
+                i++;
+            }
+
+            return u0;
+        }
+        private double[] steepestDescent(double u1, double u2, double eps, out int i)
+        {
+            i = 1;
+            double[] u0 = new double[] { u1, u2 };
+            while (i < MAX_ITERATIONS)
+            {
+                double gradLenght = getGradientLength(u0);
+                if (gradLenght < eps)
+                {
+                    return u0;
+                }
+
+                double[] grads = getGradients(u0);
+                double alpha = GetAlpha(u0, grads, eps, ref i);
+                u0[0] = u0[0] - alpha * grads[0];
+                u0[1] = u0[1] - alpha * grads[1];
+                i++;
+            }
+            return u0;
+        }
+        private double GetAlpha(double[] u, double[] grads, double eps, ref int i)
+        {
+            double a = 1.0;
+            double prevA = -a;
+            double[] point = new double[]
+            {
+                u[0] - grads[0] * a,
+                u[1] - grads[1] * a
+            };
+
+            while (Math.Abs(function(point)) > eps && a != prevA && i < MAX_ITERATIONS)
+            {
+                prevA = a;
+                double dfu = -6 * grads[0] * point[0] - 4 * grads[0] * point[1] - 4 * grads[1] * point[0] - 6 * grads[1] * point[1];
+                double dfu2 = 6 * Math.Pow(grads[0], 2) + 8 * grads[0] * grads[1] + 6 * Math.Pow(grads[1], 2);
+                a -= dfu / dfu2;
+
+                point[0] = u[0] - grads[0] * a;
+                point[1] = u[1] - grads[1] * a;
+                i++;
+            }
+            return a;
+        }
+        private double getGradientLength(params double[] u)
+        {
+            return Math.Sqrt(Math.Pow(dfdu1(u), 2) + Math.Pow(dfdu2(u), 2));
+        }
+        private double[] getGradients(params double[] u)
+        {
+            return new double[]
+            {
+                dfdu1(u),
+                dfdu2(u)
+            };
+        }
+
+        private double[] divisionStep(double u1, double u2, double eps, out int i)
+        {
+            double alpha = 1.0;
+            i = 1;
+
+            double[] u = new double[2];
+            double[] u0 = new double[] { u1, u2 };
+            double j0 = function(u0);
+            while (i < MAX_ITERATIONS)
+            {
+                double test = function(u0);
+                double gradLength = getGradientLength(u0);
+                if (gradLength < eps)
+                {
+                    return u0;
+                }
+
+                while (true)
+                {
+                    double[] grads = getGradients(u0);
+                    u[0] = u0[0] - alpha * grads[0];
+                    u[1] = u0[1] - alpha * grads[1];
+
+                    double j1 = function(u);
+                    if (j1 < j0)
+                    {
+                        u0 = u;
+                        j0 = j1;
+                        break;
+                    }
+                    else
+                    {
+                        alpha /= 2.0;
+                    }
+                    i++;
+                }
+                i++;
+            }
+            return u0;
         }
     }
 }
