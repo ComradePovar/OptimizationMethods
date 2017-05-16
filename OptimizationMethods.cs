@@ -31,7 +31,8 @@ namespace MO
 
         public double DivisionStep(double u1, double u2, double eps)
         {
-            double[] values = divisionStep(u1, u2, eps, out int i);
+            int i;
+            double[] values = divisionStep(u1, u2, eps, out i);
             Console.WriteLine($"Division step iterations: " + i);
 
             Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
@@ -40,7 +41,8 @@ namespace MO
         
         public double SteepestDescent(double u1, double u2, double eps)
         {
-            double[] values = steepestDescent(u1, u2, eps, out int i);
+            int i;
+            double[] values = steepestDescent(u1, u2, eps, out i);
             Console.WriteLine($"Steepest descent iterations: " + i);
 
             Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
@@ -49,7 +51,8 @@ namespace MO
 
         public double Penalties(double u1, double u2, double eps)
         {
-            double[] values = penalties(u1, u2, eps, out int i);
+            int i;
+            double[] values = penalties(u1, u2, eps, out i);
             Console.WriteLine($"Penalties iterations: " + i);
 
             Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
@@ -98,7 +101,8 @@ namespace MO
 
         public double Newton(double u1, double u2, double eps)
         {
-            double[] values = newton(u1, u2, eps, out int i);
+            int i;
+            double[] values = newton(u1, u2, eps, out i);
             Console.WriteLine($"Newton iterations: " + i);
 
             Console.WriteLine("u1 = " + values[0] + ", u2 = " + values[1]);
